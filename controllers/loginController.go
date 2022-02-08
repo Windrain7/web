@@ -15,7 +15,7 @@ func (con LoginController) Login(c *gin.Context) {
 	password := c.Query("Password")
 	var member models.Member
 	models.Db.Where("username=?", username).First(&member)
-	//全部按密码错误处理
+	//用户不存在，密码错误，用户已删除全部按密码错误处理
 	if member.Id == 0 || member.Password != password || member.Deleted == 1 {
 		log.Println("登陆失败，密码错误")
 		c.JSON(http.StatusOK, models.LoginResponse{
@@ -63,7 +63,7 @@ func (con LoginController) WhoAmI(c *gin.Context) {
 		})
 		return
 	}
-	id, _ := strconv.Atoi(val[1:])
+	id, _ := strconv.ParseInt(val[1:], 10, 64)
 	var member models.Member
 	models.Db.Find(&member, id)
 	c.JSON(http.StatusOK, models.WhoAmIResponse{

@@ -12,7 +12,7 @@ type MemberController struct{}
 
 func (con MemberController) Index(c *gin.Context) {
 	var member models.Member
-	id, _ := strconv.Atoi(c.Query("UserID"))
+	id, _ := strconv.ParseInt(c.Query("UserID"), 10, 64)
 	models.Db.First(&member, id)
 	if member.Id == 0 {
 		log.Printf("查找用户ID:%d失败，不存在该用户\n", id)
@@ -21,7 +21,7 @@ func (con MemberController) Index(c *gin.Context) {
 			Data: models.TMember{},
 		})
 	} else if member.Deleted == 1 {
-		log.Printf("查找用户ID:%d失败，用户已删除\n")
+		log.Printf("查找用户ID:%d失败，用户已删除\n", id)
 		c.JSON(http.StatusOK, models.GetCourseResponse{
 			Code: models.UserHasDeleted,
 			Data: models.TCourse{},
@@ -42,16 +42,7 @@ func (con MemberController) Index(c *gin.Context) {
 
 // TODO 需要细分为未登录和没有权限吗
 func (con MemberController) Create(c *gin.Context) {
-	//检查用户是否为管理员
-	val, err := c.Cookie("camp-session")
-	//没登陆或者不是管理员
-	if err != nil || val[:1] != "1" {
-		c.JSON(http.StatusOK, models.CreateMemberResponse{
-			Code: models.PermDenied,
-			Data: struct {
-				UserID string
-			}{},
-		})
+	if !canCreate(c) {
 		return
 	}
 	var member models.Member
@@ -61,7 +52,7 @@ func (con MemberController) Create(c *gin.Context) {
 		paraInvalidResponse(c, "用户名")
 		return
 	}
-	models.Db.Where("username = ?", username).First(&member)
+	models.Db.Where("username=?", username).First(&member)
 	//存在该用户名且没有删除该用户
 	if member.Id != 0 && member.Deleted == 0 {
 		log.Printf("创建用户失败，已存在用户%s\n", username)
@@ -71,7 +62,7 @@ func (con MemberController) Create(c *gin.Context) {
 		return
 	}
 	password := c.Query("Password")
-	if !validPass(password) {
+	if !ValidPass(password) {
 		paraInvalidResponse(c, "密码")
 		return
 	}
@@ -80,7 +71,7 @@ func (con MemberController) Create(c *gin.Context) {
 		paraInvalidResponse(c, "昵称")
 		return
 	}
-	userType, err := strconv.Atoi(c.Query("UserType"))
+	userType, err := strconv.ParseInt(c.Query("UserType"), 10, 8)
 	if err != nil || userType > 3 || userType < 1 {
 		paraInvalidResponse(c, "用户类型")
 		return
@@ -103,6 +94,35 @@ func (con MemberController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+//用户可以创建成员返回true，否则返回对应json
+func canCreate(c *gin.Context) bool {
+	t := GetUserTypeFromCookie(c)
+	// 未登录
+	if t == 0 {
+		println("创建用户失败,用户未登录")
+		c.JSON(http.StatusOK, models.CreateMemberResponse{
+			Code: models.LoginRequired,
+			Data: struct {
+				UserID string
+			}{},
+		})
+		return false
+	}
+	// 无权限
+	if t != 1 {
+		println("创建用户失败,用户无权限")
+		c.JSON(http.StatusOK, models.CreateMemberResponse{
+			Code: models.PermDenied,
+			Data: struct {
+				UserID string
+			}{},
+		})
+		return false
+	}
+	return true
+}
+
+// 返回创建成员参数错误
 func paraInvalidResponse(c *gin.Context, t string) {
 	log.Printf("创建用户失败，参数%s错误\n", t)
 	res := models.CreateMemberResponse{
@@ -114,28 +134,16 @@ func paraInvalidResponse(c *gin.Context, t string) {
 	c.JSON(http.StatusOK, res)
 }
 
-func validPass(password string) bool {
-	if len(password) < 8 || len(password) > 20 {
-		return false
-	}
-	var hasCapital, hasLower, hasDigital bool
-	for _, ch := range password {
-		hasLower = (ch >= 'a' && ch <= 'z') || hasLower
-		hasCapital = (ch >= 'A' && ch <= 'Z') || hasCapital
-		hasDigital = (ch >= '0' && ch <= '9') || hasDigital
-	}
-	return hasDigital && hasLower && hasCapital
-}
-
 func (con MemberController) List(c *gin.Context) {
 	var members []models.Member
 	offset, _ := strconv.Atoi(c.Query("Offset"))
 	limit, _ := strconv.Atoi(c.Query("Limit"))
-	models.Db.Limit(limit).Offset(offset).Find(&members)
+	//过滤已删除的成员
+	models.Db.Where("deleted=0").Limit(limit).Offset(offset).Find(&members)
 	tMembers := make([]models.TMember, len(members))
 	for i, member := range members {
 		tMembers[i] = models.TMember{
-			UserID:   strconv.Itoa(int(member.Id)),
+			UserID:   strconv.FormatInt(member.Id, 10),
 			Nickname: member.Nickname,
 			Username: member.Username,
 			UserType: models.UserType(member.UserType),
@@ -149,15 +157,29 @@ func (con MemberController) List(c *gin.Context) {
 	})
 }
 
+// TODO 要求是 非管理员只能改自己的nickname，管理员可以改所有人的nickname吗
+// TODO 要是用户额外传入了密码参数怎么处理
 func (con MemberController) Update(c *gin.Context) {
-	var member models.Member
-	id, err := strconv.Atoi(c.Query("UserID"))
+	userType := GetUserTypeFromCookie(c)
+	// 未登录
+	if userType == 0 {
+		log.Println("更新用户失败，用户未登录")
+		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.LoginRequired})
+	}
+	userId := GetIdFromCookie(c)
+	id, err := strconv.ParseInt(c.Query("UserID"), 10, 64)
+	// 不是管理员并且改的不是自己id
+	if userId != id && userType != 1 {
+		log.Println("更新用户失败，用户无权限")
+		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.PermDenied})
+	}
 	nickname := c.Query("Nickname")
 	if err != nil || len(nickname) < 4 || len(nickname) > 8 {
 		log.Printf("更新昵称失败，更新后的昵称:%s不合法\n", nickname)
 		c.JSON(http.StatusOK, models.ParamInvalid)
 		return
 	}
+	var member models.Member
 	models.Db.First(&member, id)
 	if member.Id == 0 {
 		log.Printf("更新昵称失败，用户id:%d不存在\n", id)
@@ -174,7 +196,7 @@ func (con MemberController) Update(c *gin.Context) {
 
 func (con MemberController) Delete(c *gin.Context) {
 	var member models.Member
-	id, _ := strconv.Atoi(c.Query("UserID"))
+	id, _ := strconv.ParseInt(c.Query("UserID"), 10, 64)
 	models.Db.First(&member, id)
 	if member.Id == 0 {
 		log.Printf("删除用户失败,用户id:%d不存在\n", id)
