@@ -11,8 +11,17 @@ import (
 type MemberController struct{}
 
 func (con MemberController) Index(c *gin.Context) {
+	var request models.GetMemberRequest
+	if err := c.BindQuery(&request); err != nil {
+		log.Println("查找用户失败，参数错误")
+		c.JSON(http.StatusOK, models.GetMemberResponse{
+			Code: models.ParamInvalid,
+			Data: models.TMember{},
+		})
+		return
+	}
+	id, _ := strconv.ParseInt(request.UserID, 10, 64)
 	var member models.Member
-	id, _ := strconv.ParseInt(c.Query("UserID"), 10, 64)
 	models.Db.First(&member, id)
 	if member.Id == 0 {
 		log.Printf("查找用户ID:%d失败，不存在该用户\n", id)
@@ -48,8 +57,10 @@ func (con MemberController) Create(c *gin.Context) {
 	var request models.CreateMemberRequest
 	var res models.CreateMemberResponse
 	if err := c.ShouldBindJSON(&request); err != nil {
+		log.Println("创建用户失败，参数解析错误")
 		res.Code = models.ParamInvalid
 		c.JSON(http.StatusOK, res)
+		return
 	}
 	if len(request.Username) < 8 || len(request.Username) > 20 {
 		paraInvalidResponse(c, "用户名"+request.Username)
@@ -124,11 +135,20 @@ func paraInvalidResponse(c *gin.Context, t string) {
 }
 
 func (con MemberController) List(c *gin.Context) {
+	var request models.GetMemberListRequest
+	if err := c.BindQuery(&request); err != nil {
+		log.Println("列表查询失败，参数解析错误")
+		c.JSON(http.StatusOK, models.GetMemberListResponse{
+			Code: models.ParamInvalid,
+			Data: struct {
+				MemberList []models.TMember
+			}{},
+		})
+		return
+	}
 	var members []models.Member
-	offset, _ := strconv.Atoi(c.Query("Offset"))
-	limit, _ := strconv.Atoi(c.Query("Limit"))
 	//过滤已删除的成员
-	models.Db.Where("deleted=0").Limit(limit).Offset(offset).Find(&members)
+	models.Db.Where("deleted=0").Limit(request.Limit).Offset(request.Offset).Find(&members)
 	tMembers := make([]models.TMember, len(members))
 	//使用Member构造TMember
 	for i, member := range members {
@@ -136,7 +156,7 @@ func (con MemberController) List(c *gin.Context) {
 			UserID:   strconv.FormatInt(member.Id, 10),
 			Nickname: member.Nickname,
 			Username: member.Username,
-			UserType: models.UserType(member.UserType),
+			UserType: member.UserType,
 		}
 	}
 	c.JSON(http.StatusOK, models.GetMemberListResponse{

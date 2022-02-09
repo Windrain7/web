@@ -92,7 +92,7 @@ func (con LoginController) WhoAmI(c *gin.Context) {
 			UserID:   strconv.FormatInt(member.Id, 10),
 			Nickname: member.Nickname,
 			Username: member.Username,
-			UserType: models.UserType(member.UserType),
+			UserType: member.UserType,
 		},
 	})
 
