@@ -66,10 +66,10 @@ const (
 // 只有管理员才能添加
 
 type CreateMemberRequest struct {
-	Nickname string   // required，不小于 4 位 不超过 20 位
-	Username string   // required，只支持大小写，长度不小于 8 位 不超过 20 位
-	Password string   // required，同时包括大小写、数字，长度不少于 8 位 不超过 20 位
-	UserType UserType // required, 枚举值
+	Nickname string   `json:"nickname"` // required，不小于 4 位 不超过 20 位
+	Username string   `json:"username"` // required，只支持大小写，长度不小于 8 位 不超过 20 位
+	Password string   `json:"password"` // required，同时包括大小写、数字，长度不少于 8 位 不超过 20 位
+	UserType UserType `json:"userType"` // required, 枚举值
 }
 
 type CreateMemberResponse struct {
@@ -82,7 +82,7 @@ type CreateMemberResponse struct {
 // 获取成员信息
 
 type GetMemberRequest struct {
-	UserID string
+	UserID string `json:"userID"`
 }
 
 // 如果用户已删除请返回已删除状态码，不存在请返回不存在状态码
@@ -95,8 +95,8 @@ type GetMemberResponse struct {
 // 批量获取成员信息
 
 type GetMemberListRequest struct {
-	Offset int
-	Limit  int
+	Offset int `json:"offset,omitempty"`
+	Limit  int `json:"limit,omitempty"`
 }
 
 type GetMemberListResponse struct {
@@ -109,8 +109,8 @@ type GetMemberListResponse struct {
 // 更新成员信息
 
 type UpdateMemberRequest struct {
-	UserID   string
-	Nickname string
+	UserID   string `json:"userID,omitempty"`
+	Nickname string `json:"nickname,omitempty"`
 }
 
 type UpdateMemberResponse struct {
@@ -121,7 +121,7 @@ type UpdateMemberResponse struct {
 // 成员删除后，该成员不能够被登录且不应该不可见，ID 不可复用
 
 type DeleteMemberRequest struct {
-	UserID string
+	UserID string `json:"userID"`
 }
 
 type DeleteMemberResponse struct {
@@ -132,8 +132,8 @@ type DeleteMemberResponse struct {
 // 登录
 
 type LoginRequest struct {
-	Username string
-	Password string
+	Username string `json:"username,omitempty"`
+	Password string `json:"password,omitempty"`
 }
 
 // 登录成功后需要 Set-Cookie("camp-session", ${value})
@@ -174,8 +174,8 @@ type WhoAmIResponse struct {
 // 创建课程
 // Method: Post
 type CreateCourseRequest struct {
-	Name string
-	Cap  int
+	Name string `json:"name,omitempty"`
+	Cap  int    `json:"cap,omitempty"`
 }
 
 type CreateCourseResponse struct {
@@ -188,7 +188,7 @@ type CreateCourseResponse struct {
 // 获取课程
 // Method: Get
 type GetCourseRequest struct {
-	CourseID string
+	CourseID string `json:"courseID"`
 }
 
 type GetCourseResponse struct {
@@ -201,8 +201,8 @@ type GetCourseResponse struct {
 // 注：这里的 teacherID 不需要做已落库校验
 // 一个老师可以绑定多个课程 , 不过，一个课程只能绑定在一个老师下面
 type BindCourseRequest struct {
-	CourseID  string
-	TeacherID string
+	CourseID  string `json:"courseID"`
+	TeacherID string `json:"teacherID"`
 }
 
 type BindCourseResponse struct {
@@ -212,8 +212,8 @@ type BindCourseResponse struct {
 // 老师解绑课程
 // Method： Post
 type UnbindCourseRequest struct {
-	CourseID  string
-	TeacherID string
+	CourseID  string `json:"courseID,omitempty"`
+	TeacherID string `json:"teacherID,omitempty"`
 }
 
 type UnbindCourseResponse struct {
@@ -223,7 +223,7 @@ type UnbindCourseResponse struct {
 // 获取老师下所有课程
 // Method：Get
 type GetTeacherCourseRequest struct {
-	TeacherID string
+	TeacherID string `json:"teacherID,omitempty"`
 }
 
 type GetTeacherCourseResponse struct {
@@ -236,7 +236,7 @@ type GetTeacherCourseResponse struct {
 // 排课求解器，使老师绑定课程的最优解， 老师有且只能绑定一个课程
 // Method： Post
 type ScheduleCourseRequest struct {
-	TeacherCourseRelationShip map[string][]string // key 为 teacherID , val 为老师期望绑定的课程 courseID 数组
+	TeacherCourseRelationShip map[string][]string `json:"teacherCourseRelationShip,omitempty"` // key 为 teacherID , val 为老师期望绑定的课程 courseID 数组
 }
 
 type ScheduleCourseResponse struct {
@@ -245,8 +245,8 @@ type ScheduleCourseResponse struct {
 }
 
 type BookCourseRequest struct {
-	StudentID string
-	CourseID  string
+	StudentID string `json:"studentID,omitempty"`
+	CourseID  string `json:"courseID,omitempty"`
 }
 
 // 课程已满返回 CourseNotAvailable
@@ -256,7 +256,7 @@ type BookCourseResponse struct {
 }
 
 type GetStudentCourseRequest struct {
-	StudentID string
+	StudentID string `json:"studentID,omitempty"`
 }
 
 type GetStudentCourseResponse struct {

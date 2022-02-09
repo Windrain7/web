@@ -5,7 +5,7 @@ type Member struct {
 	Username string
 	Password string
 	Nickname string
-	UserType int8
+	UserType UserType
 	Deleted  int8
 }
 

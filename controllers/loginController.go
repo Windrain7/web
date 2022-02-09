@@ -11,11 +11,21 @@ import (
 type LoginController struct{}
 
 func (con LoginController) Login(c *gin.Context) {
-	username := c.Query("Username")
-	password := c.Query("Password")
-	//检查输入用户名和密码的合法性
-	if len(username) < 8 || len(username) > 20 || !ValidPass(password) {
+	var request models.LoginRequest
+	if err := c.BindJSON(&request); err != nil {
 		log.Println("登陆失败，密码错误")
+		log.Println("登陆失败，绑定json错误")
+		c.JSON(http.StatusOK, models.LoginResponse{
+			Code: models.WrongPassword,
+			Data: struct {
+				UserID string
+			}{"-1"},
+		})
+		return
+	}
+	//检查输入用户名和密码的合法性
+	if len(request.Username) < 8 || len(request.Username) > 20 || !ValidPass(request.Password) {
+		log.Printf("登陆失败，用户名:%s, 密码:%s\n", request.Username, request.Password)
 		c.JSON(http.StatusOK, models.LoginResponse{
 			Code: models.WrongPassword,
 			Data: struct {
@@ -24,10 +34,10 @@ func (con LoginController) Login(c *gin.Context) {
 		})
 	}
 	var member models.Member
-	models.Db.Where("username=?", username).First(&member)
+	models.Db.Where("username=?", request.Username).First(&member)
 	//用户不存在，密码错误，用户已删除全部按密码错误处理
-	if member.Id == 0 || member.Password != password || member.Deleted == 1 {
-		log.Println("登陆失败，密码错误")
+	if member.Id == 0 || member.Password != request.Password || member.Deleted == 1 {
+		log.Println("登陆失败，用户不存在或者密码错误或者用户已删除")
 		c.JSON(http.StatusOK, models.LoginResponse{
 			Code: models.WrongPassword,
 			Data: struct {
@@ -63,8 +73,8 @@ func (con LoginController) Logout(c *gin.Context) {
 
 // WhoAmI TODO 会出现这里登录着，但是被别人删了的情况吗
 func (con LoginController) WhoAmI(c *gin.Context) {
-	val, err := c.Cookie("camp-session")
 	//未登录
+	val, err := c.Cookie("camp-session")
 	if err != nil {
 		log.Println("查看信息失败，用户未登录")
 		c.JSON(http.StatusOK, models.WhoAmIResponse{

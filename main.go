@@ -9,5 +9,6 @@ func main() {
 	r := gin.Default()
 	routers.MemberRouterInit(r)
 	routers.LoginRouterInit(r)
+	routers.CourseRouterInit(r)
 	r.Run(":4396")
 }
