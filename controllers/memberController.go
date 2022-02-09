@@ -10,6 +10,7 @@ import (
 
 type MemberController struct{}
 
+// 没有区分用户是否登录
 func (con MemberController) Index(c *gin.Context) {
 	var member models.Member
 	id, _ := strconv.ParseInt(c.Query("UserID"), 10, 64)
@@ -134,6 +135,7 @@ func paraInvalidResponse(c *gin.Context, t string) {
 	c.JSON(http.StatusOK, res)
 }
 
+// TODO 需要判断是否登录和和没有权限吗
 func (con MemberController) List(c *gin.Context) {
 	var members []models.Member
 	offset, _ := strconv.Atoi(c.Query("Offset"))
@@ -141,6 +143,7 @@ func (con MemberController) List(c *gin.Context) {
 	//过滤已删除的成员
 	models.Db.Where("deleted=0").Limit(limit).Offset(offset).Find(&members)
 	tMembers := make([]models.TMember, len(members))
+	//使用Member构造TMember
 	for i, member := range members {
 		tMembers[i] = models.TMember{
 			UserID:   strconv.FormatInt(member.Id, 10),
@@ -167,46 +170,47 @@ func (con MemberController) Update(c *gin.Context) {
 		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.LoginRequired})
 	}
 	userId := GetIdFromCookie(c)
-	id, err := strconv.ParseInt(c.Query("UserID"), 10, 64)
+	id, _ := strconv.ParseInt(c.Query("UserID"), 10, 64)
 	// 不是管理员并且改的不是自己id
 	if userId != id && userType != 1 {
 		log.Println("更新用户失败，用户无权限")
 		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.PermDenied})
 	}
 	nickname := c.Query("Nickname")
-	if err != nil || len(nickname) < 4 || len(nickname) > 8 {
+	if len(nickname) < 4 || len(nickname) > 8 {
 		log.Printf("更新昵称失败，更新后的昵称:%s不合法\n", nickname)
-		c.JSON(http.StatusOK, models.ParamInvalid)
+		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.ParamInvalid})
 		return
 	}
 	var member models.Member
 	models.Db.First(&member, id)
 	if member.Id == 0 {
 		log.Printf("更新昵称失败，用户id:%d不存在\n", id)
-		c.JSON(http.StatusOK, models.UserNotExisted)
+		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.UserNotExisted})
 	} else if member.Deleted == 1 {
 		log.Printf("更新昵称失败，用户id:%d已删除\n", id)
-		c.JSON(http.StatusOK, models.UserHasDeleted)
+		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.UserHasDeleted})
 	} else {
 		member.Nickname = nickname
 		models.Db.Save(&member)
-		c.JSON(http.StatusOK, models.OK)
+		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.OK})
 	}
 }
 
+// TODO 需要判断是否登录和没有权限吗
 func (con MemberController) Delete(c *gin.Context) {
 	var member models.Member
 	id, _ := strconv.ParseInt(c.Query("UserID"), 10, 64)
 	models.Db.First(&member, id)
 	if member.Id == 0 {
 		log.Printf("删除用户失败,用户id:%d不存在\n", id)
-		c.JSON(http.StatusOK, models.UserNotExisted)
+		c.JSON(http.StatusOK, models.DeleteMemberResponse{Code: models.UserNotExisted})
 	} else if member.Deleted == 1 {
 		log.Printf("删除用户失败,用户id:%d已删除\n", id)
-		c.JSON(http.StatusOK, models.UserHasDeleted)
+		c.JSON(http.StatusOK, models.DeleteMemberResponse{Code: models.UserHasDeleted})
 	} else {
 		member.Deleted = 1
 		models.Db.Save(&member)
-		c.JSON(http.StatusOK, models.OK)
+		c.JSON(http.StatusOK, models.DeleteMemberResponse{Code: models.OK})
 	}
 }

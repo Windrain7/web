@@ -13,6 +13,16 @@ type LoginController struct{}
 func (con LoginController) Login(c *gin.Context) {
 	username := c.Query("Username")
 	password := c.Query("Password")
+	//检查输入用户名和密码的合法性
+	if len(username) < 8 || len(username) > 20 || !ValidPass(password) {
+		log.Println("登陆失败，密码错误")
+		c.JSON(http.StatusOK, models.LoginResponse{
+			Code: models.WrongPassword,
+			Data: struct {
+				UserID string
+			}{"-1"},
+		})
+	}
 	var member models.Member
 	models.Db.Where("username=?", username).First(&member)
 	//用户不存在，密码错误，用户已删除全部按密码错误处理
