@@ -109,7 +109,17 @@ func (con MemberController) Create(c *gin.Context) {
 //用户可以创建成员返回true，否则返回对应json
 func canCreate(c *gin.Context) bool {
 	val, err := c.Cookie("camp-session")
-	if err != nil || val[:1] != "1" {
+	if err != nil {
+		println("创建用户失败,用户未登录")
+		c.JSON(http.StatusOK, models.CreateMemberResponse{
+			Code: models.LoginRequired,
+			Data: struct {
+				UserID string
+			}{},
+		})
+		return false
+	}
+	if val[:1] != "1" {
 		println("创建用户失败,用户无权限")
 		c.JSON(http.StatusOK, models.CreateMemberResponse{
 			Code: models.PermDenied,
