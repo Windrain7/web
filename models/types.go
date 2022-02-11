@@ -109,8 +109,8 @@ type GetMemberListResponse struct {
 // 更新成员信息
 
 type UpdateMemberRequest struct {
-	UserID   string `json:"userID,omitempty"`
-	Nickname string `json:"nickname,omitempty"`
+	UserID   string `json:"userID"`
+	Nickname string `json:"nickname"`
 }
 
 type UpdateMemberResponse struct {
@@ -132,8 +132,8 @@ type DeleteMemberResponse struct {
 // 登录
 
 type LoginRequest struct {
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // 登录成功后需要 Set-Cookie("camp-session", ${value})
@@ -174,8 +174,8 @@ type WhoAmIResponse struct {
 // 创建课程
 // Method: Post
 type CreateCourseRequest struct {
-	Name string `json:"name,omitempty"`
-	Cap  int    `json:"cap,omitempty"`
+	Name string `json:"name"`
+	Cap  int    `json:"cap"`
 }
 
 type CreateCourseResponse struct {
@@ -212,8 +212,8 @@ type BindCourseResponse struct {
 // 老师解绑课程
 // Method： Post
 type UnbindCourseRequest struct {
-	CourseID  string `json:"courseID,omitempty"`
-	TeacherID string `json:"teacherID,omitempty"`
+	CourseID  string `json:"courseID"`
+	TeacherID string `json:"teacherID"`
 }
 
 type UnbindCourseResponse struct {
@@ -223,7 +223,7 @@ type UnbindCourseResponse struct {
 // 获取老师下所有课程
 // Method：Get
 type GetTeacherCourseRequest struct {
-	TeacherID string `json:"teacherID,omitempty"`
+	TeacherID string `json:"teacherID"`
 }
 
 type GetTeacherCourseResponse struct {
@@ -236,7 +236,7 @@ type GetTeacherCourseResponse struct {
 // 排课求解器，使老师绑定课程的最优解， 老师有且只能绑定一个课程
 // Method： Post
 type ScheduleCourseRequest struct {
-	TeacherCourseRelationShip map[string][]string `json:"teacherCourseRelationShip,omitempty"` // key 为 teacherID , val 为老师期望绑定的课程 courseID 数组
+	TeacherCourseRelationShip map[string][]string `json:"teacherCourseRelationShip"` // key 为 teacherID , val 为老师期望绑定的课程 courseID 数组
 }
 
 type ScheduleCourseResponse struct {
@@ -245,8 +245,8 @@ type ScheduleCourseResponse struct {
 }
 
 type BookCourseRequest struct {
-	StudentID string `json:"studentID,omitempty"`
-	CourseID  string `json:"courseID,omitempty"`
+	StudentID string `json:"studentID"`
+	CourseID  string `json:"courseID"`
 }
 
 // 课程已满返回 CourseNotAvailable
@@ -256,7 +256,7 @@ type BookCourseResponse struct {
 }
 
 type GetStudentCourseRequest struct {
-	StudentID string `json:"studentID,omitempty"`
+	StudentID string `json:"studentID"`
 }
 
 type GetStudentCourseResponse struct {

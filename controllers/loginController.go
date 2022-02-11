@@ -32,6 +32,7 @@ func (con LoginController) Login(c *gin.Context) {
 				UserID string
 			}{"-1"},
 		})
+		return
 	}
 	var member models.Member
 	models.Db.Where("username=?", request.Username).First(&member)
@@ -71,7 +72,6 @@ func (con LoginController) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, models.LogoutResponse{Code: models.OK})
 }
 
-// WhoAmI TODO 会出现这里登录着，但是被别人删了的情况吗
 func (con LoginController) WhoAmI(c *gin.Context) {
 	//未登录
 	val, err := c.Cookie("camp-session")

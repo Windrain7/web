@@ -42,7 +42,7 @@ func (con MemberController) Index(c *gin.Context) {
 				UserID:   strconv.Itoa(int(member.Id)),
 				Nickname: member.Nickname,
 				Username: member.Username,
-				UserType: models.UserType(member.UserType),
+				UserType: member.UserType,
 			},
 		}
 		c.JSON(http.StatusOK, res)
@@ -147,6 +147,7 @@ func (con MemberController) List(c *gin.Context) {
 		return
 	}
 	var members []models.Member
+	log.Println("offset:", request.Offset, "\tlimit:", request.Limit)
 	//过滤已删除的成员
 	models.Db.Where("deleted=0").Limit(request.Limit).Offset(request.Offset).Find(&members)
 	tMembers := make([]models.TMember, len(members))
