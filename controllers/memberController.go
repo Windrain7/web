@@ -68,8 +68,8 @@ func (con MemberController) Create(c *gin.Context) {
 	}
 	var member models.Member
 	models.Db.Where("username=?", request.Username).First(&member)
-	//存在该用户名且没有删除该用户
-	if member.Id != 0 && member.Deleted == 0 {
+	//存在该用户名
+	if member.Id != 0 {
 		log.Printf("创建用户失败，已存在用户%s\n", request.Username)
 		res.Code = models.UserHasExisted
 		res.Data.UserID = "-1"
