@@ -10,5 +10,6 @@ func main() {
 	routers.MemberRouterInit(r)
 	routers.LoginRouterInit(r)
 	routers.CourseRouterInit(r)
+	routers.StudentRouterInit(r)
 	r.Run(":4396")
 }

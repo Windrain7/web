@@ -114,12 +114,9 @@ func (con CourseController) UnbindCourse(c *gin.Context) {
 	if models.Db.First(&course, id); course.Id == 0 {
 		log.Printf("解绑失败，课程id:%d不存在\n", id)
 		c.JSON(http.StatusOK, models.UnbindCourseResponse{Code: models.CourseNotExisted})
-	} else if course.TeacherId == 0 {
+	} else if course.TeacherId == 0 || course.TeacherId != teacherId {
 		log.Printf("解绑失败，课程id:%d的课程没有绑定\n", id)
 		c.JSON(http.StatusOK, models.UnbindCourseResponse{Code: models.CourseNotBind})
-	} else if course.TeacherId != teacherId {
-		log.Printf("解绑失败，课程id:%d与老师id:%d对应错误\n", id, teacherId)
-		c.JSON(http.StatusOK, models.UnbindCourseResponse{Code: models.ParamInvalid})
 	} else {
 		course.TeacherId = 0
 		models.Db.Save(&course)

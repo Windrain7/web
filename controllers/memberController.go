@@ -49,7 +49,6 @@ func (con MemberController) Index(c *gin.Context) {
 	}
 }
 
-// TODO 需要细分为未登录和没有权限吗
 func (con MemberController) Create(c *gin.Context) {
 	if !canCreate(c) {
 		return
