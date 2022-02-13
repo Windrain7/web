@@ -4,7 +4,7 @@ type Course struct {
 	Id        int64
 	Name      string
 	Cap       int
-	Count     int
+	Remain    int
 	TeacherId int64
 }
 

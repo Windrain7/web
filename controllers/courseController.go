@@ -23,8 +23,9 @@ func (con CourseController) Create(c *gin.Context) {
 		return
 	}
 	course := models.Course{
-		Name: request.Name,
-		Cap:  request.Cap,
+		Name:   request.Name,
+		Cap:    request.Cap,
+		Remain: request.Cap,
 	}
 	if err := models.Db.Create(&course).Error; err != nil {
 		log.Printf("创建课程失败，插入数据库错误")
