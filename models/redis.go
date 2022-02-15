@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-//TODO bookCourse的同步问题还没考虑
+//TODO bookCourse和teacherId的同步问题还没考虑
 const bookCourseScript = `
 	--- KEYS[1]:courseIdKey	 "course_id_{courseId}"
 	--- KEYS[2]:bookCourseKey "book_{studentId}"

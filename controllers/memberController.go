@@ -61,7 +61,7 @@ func (con MemberController) Create(c *gin.Context) {
 		c.JSON(http.StatusOK, res)
 		return
 	}
-	if len(request.Username) < 8 || len(request.Username) > 20 {
+	if !ValidUsername(request.Username) {
 		paraInvalidResponse(c, "用户名"+request.Username)
 		return
 	}
@@ -184,7 +184,7 @@ func (con MemberController) Update(c *gin.Context) {
 		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.ParamInvalid})
 		return
 	}
-	if len(request.Nickname) < 4 || len(request.Nickname) > 8 {
+	if len(request.Nickname) < 4 || len(request.Nickname) > 20 {
 		log.Printf("更新昵称失败，更新后的昵称:%s不合法\n", request.Nickname)
 		c.JSON(http.StatusOK, models.UpdateMemberResponse{Code: models.ParamInvalid})
 		return

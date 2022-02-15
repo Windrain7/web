@@ -19,6 +19,18 @@ func ValidPass(password string) bool {
 	return hasDigital && hasLower && hasCapital
 }
 
+func ValidUsername(username string) bool {
+	if len(username) < 8 || len(username) > 20 {
+		return false
+	}
+	for _, ch := range username {
+		if (ch < 'a' || ch > 'z') && (ch < 'A' || ch > 'Z') {
+			return false
+		}
+	}
+	return true
+}
+
 //从cookie获取用户身份，若未登录返回0，登录返回身份
 func GetUserTypeFromCookie(c *gin.Context) models.UserType {
 	val, err := c.Cookie("camp-session")
