@@ -116,7 +116,7 @@ func (con CourseController) UnbindCourse(c *gin.Context) {
 		log.Printf("解绑失败，课程id:%d不存在\n", id)
 		c.JSON(http.StatusOK, models.UnbindCourseResponse{Code: models.CourseNotExisted})
 	} else if course.TeacherId == 0 || course.TeacherId != teacherId {
-		log.Printf("解绑失败，课程id:%d的课程没有绑定\n", id)
+		log.Printf("解绑失败，课程id:%d的课程没有绑定老师id:%d的老师\n", id, teacherId)
 		c.JSON(http.StatusOK, models.UnbindCourseResponse{Code: models.CourseNotBind})
 	} else {
 		course.TeacherId = 0
@@ -135,7 +135,7 @@ func (con CourseController) GetCourse(c *gin.Context) {
 	}
 	teacherId, _ := strconv.ParseInt(request.TeacherID, 10, 64)
 	var courses []models.Course
-	models.Db.Where("teacher_id=?", teacherId).Find(courses)
+	models.Db.Where("teacher_id=?", teacherId).Find(&courses)
 	tCourses := make([]*models.TCourse, len(courses))
 	for i, course := range courses {
 		tCourses[i] = &models.TCourse{

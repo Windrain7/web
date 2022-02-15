@@ -109,7 +109,7 @@ func (con MemberController) Create(c *gin.Context) {
 func canCreate(c *gin.Context) bool {
 	val, err := c.Cookie("camp-session")
 	if err != nil {
-		println("创建用户失败,用户未登录")
+		log.Println("创建用户失败,用户未登录")
 		c.JSON(http.StatusOK, models.CreateMemberResponse{
 			Code: models.LoginRequired,
 			Data: struct {
@@ -119,7 +119,7 @@ func canCreate(c *gin.Context) bool {
 		return false
 	}
 	if val[:1] != "1" {
-		println("创建用户失败,用户无权限")
+		log.Println("创建用户失败,用户无权限")
 		c.JSON(http.StatusOK, models.CreateMemberResponse{
 			Code: models.PermDenied,
 			Data: struct {
