@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -107,25 +108,18 @@ func (con MemberController) Create(c *gin.Context) {
 
 //用户可以创建成员返回true，否则返回对应json
 func canCreate(c *gin.Context) bool {
-	val, err := c.Cookie("camp-session")
-	if err != nil {
+	session := sessions.Default(c)
+	if session.Get("member") == nil {
+		log.Println(c.Request.Header)
+		log.Println(c.Request.Body)
 		log.Println("创建用户失败,用户未登录")
-		c.JSON(http.StatusOK, models.CreateMemberResponse{
-			Code: models.LoginRequired,
-			Data: struct {
-				UserID string
-			}{},
-		})
+		c.JSON(http.StatusOK, models.CreateMemberResponse{Code: models.LoginRequired})
 		return false
 	}
-	if val[:1] != "1" {
+	member := session.Get("member").(models.Member)
+	if member.UserType != models.Admin {
 		log.Println("创建用户失败,用户无权限")
-		c.JSON(http.StatusOK, models.CreateMemberResponse{
-			Code: models.PermDenied,
-			Data: struct {
-				UserID string
-			}{},
-		})
+		c.JSON(http.StatusOK, models.CreateMemberResponse{Code: models.PermDenied})
 		return false
 	}
 	return true

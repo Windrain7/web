@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -46,11 +47,9 @@ func (con LoginController) Login(c *gin.Context) {
 			}{"-1"},
 		})
 	} else {
-		//cookie为 member.UserType + member.Id
-		//UserType 1为管理员，2为学生，3为教师
-		t := strconv.FormatInt(int64(member.UserType), 10) + strconv.FormatInt(member.Id, 10)
-		c.SetCookie("camp-session", t, 3600, "/", "180.184.74.66", false, true)
-		log.Printf("当前用户cookie为:%s\n", t)
+		session := sessions.Default(c)
+		session.Set("member", member)
+		session.Save()
 		c.JSON(http.StatusOK, models.LoginResponse{
 			Code: models.OK,
 			Data: struct {
@@ -61,31 +60,25 @@ func (con LoginController) Login(c *gin.Context) {
 }
 
 func (con LoginController) Logout(c *gin.Context) {
-	val, err := c.Cookie("camp-session")
-	//未登录
-	if err != nil {
+	session := sessions.Default(c)
+	if session.Get("member") == nil {
 		log.Println("登出失败，用户未登录")
 		c.JSON(http.StatusOK, models.LogoutResponse{Code: models.LoginRequired})
 		return
 	}
-	c.SetCookie("camp-session", val, -1, "/", "180.184.74.66", false, true)
+	session.Delete("member")
+	session.Save()
 	c.JSON(http.StatusOK, models.LogoutResponse{Code: models.OK})
 }
 
 func (con LoginController) WhoAmI(c *gin.Context) {
-	//未登录
-	val, err := c.Cookie("camp-session")
-	if err != nil {
-		log.Println("查看信息失败，用户未登录")
-		c.JSON(http.StatusOK, models.WhoAmIResponse{
-			Code: models.LoginRequired,
-			Data: models.TMember{},
-		})
+	session := sessions.Default(c)
+	if session.Get("member") == nil {
+		log.Println("查看用户信息失败，用户未登录")
+		c.JSON(http.StatusOK, models.LogoutResponse{Code: models.LoginRequired})
 		return
 	}
-	id, _ := strconv.ParseInt(val[1:], 10, 64)
-	var member models.Member
-	models.Db.Find(&member, id)
+	member := session.Get("member").(models.Member)
 	c.JSON(http.StatusOK, models.WhoAmIResponse{
 		Code: models.OK,
 		Data: models.TMember{
@@ -95,5 +88,4 @@ func (con LoginController) WhoAmI(c *gin.Context) {
 			UserType: member.UserType,
 		},
 	})
-
 }

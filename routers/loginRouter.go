@@ -1,6 +1,8 @@
 package routers
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 import "web/controllers"
 
 func LoginRouterInit(c *gin.Engine) {

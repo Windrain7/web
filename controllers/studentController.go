@@ -15,11 +15,11 @@ type bookMessage struct {
 	courseId  string
 }
 
-const StudentPrefix = "student_id_"
-const CoursePrefix = "course_id_"
+const StudentPrefix = "student_"
+const CoursePrefix = "course_"
 const BookPrefix = "book_"
 
-var bookChannel = make(chan bookMessage, 2000)
+var bookChannel = make(chan bookMessage, 20000)
 
 func StudentControllerInit() {
 	preheat()
