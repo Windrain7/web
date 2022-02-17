@@ -19,5 +19,6 @@ func main() {
 	routers.LoginRouterInit(r)
 	routers.CourseRouterInit(r)
 	routers.StudentRouterInit(r)
+	routers.TeacherRouterInit(r)
 	r.Run(":80")
 }
