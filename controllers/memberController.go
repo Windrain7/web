@@ -110,6 +110,7 @@ func (con MemberController) Create(c *gin.Context) {
 func canCreate(c *gin.Context) bool {
 	session := sessions.Default(c)
 	if session.Get("member") == nil {
+		log.Println(session)
 		log.Println(c.Request.Header)
 		log.Println(c.Request.Body)
 		log.Println("创建用户失败,用户未登录")

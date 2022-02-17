@@ -13,7 +13,7 @@ const bookCourseScript = `
 	--- 返回-1表示课程已经没有余额，返回-2表示课程已经选过
 
 	local remain = redis.call("HGET", KEYS[1], "remain");
-	if (tonumber(remain) == 0) 
+	if (remain == "0") 
 	then 
 		return -1;
 	end
