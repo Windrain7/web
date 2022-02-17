@@ -104,8 +104,13 @@ func (con MemberController) Create(c *gin.Context) {
 	}
 	res.Code = models.OK
 	res.Data.UserID = strconv.Itoa(int(member.Id))
-	//缓存中置为存在
-	models.Rdb.Set(models.Ctx, StudentPrefix+res.Data.UserID, "1", redis.KeepTTL)
+	//如果是学生，在缓存中置为存在
+	if member.UserType == models.Student {
+		models.Rdb.Set(models.Ctx, StudentPrefix+res.Data.UserID, "1", redis.KeepTTL)
+	} else {
+		//如果不是学生，置为不存在
+		models.Rdb.Set(models.Ctx, StudentPrefix+res.Data.UserID, "0", redis.KeepTTL)
+	}
 	c.JSON(http.StatusOK, res)
 }
 
