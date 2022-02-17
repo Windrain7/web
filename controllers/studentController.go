@@ -15,6 +15,8 @@ type bookMessage struct {
 	courseId  string
 }
 
+var noRemain = map[string]bool{}
+
 const StudentPrefix = "student_"
 const CoursePrefix = "course_"
 const BookPrefix = "book_"
@@ -41,6 +43,12 @@ func (con StudentController) BookCourse(c *gin.Context) {
 	if !hasCourse(request.CourseID) {
 		log.Println("抢课失败，课程id:", request.CourseID, "不存在")
 		c.JSON(http.StatusOK, models.BookCourseResponse{Code: models.CourseNotExisted})
+		return
+	}
+	//本地判断是否没有库存
+	if noRemain[CoursePrefix+request.CourseID] {
+		log.Println("抢课失败，课程id:", request.CourseID, "已满")
+		c.JSON(http.StatusOK, models.BookCourseResponse{Code: models.CourseNotAvailable})
 		return
 	}
 	if !tryBookCourse(CoursePrefix+request.CourseID, BookPrefix+request.StudentID, c) {
@@ -184,6 +192,7 @@ func tryBookCourse(courseIdKey, bookCourseKey string, c *gin.Context) bool {
 	}
 	if code == -1 {
 		log.Printf("抢课失败，%s课程容量不足\n", courseIdKey)
+		noRemain[courseIdKey] = true
 		c.JSON(http.StatusOK, models.BookCourseResponse{Code: models.CourseNotAvailable})
 		return false
 	} else if code == -2 {

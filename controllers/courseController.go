@@ -43,6 +43,13 @@ func (con CourseController) Create(c *gin.Context) {
 				CourseID string
 			}{strconv.FormatInt(course.Id, 10)},
 		})
+		//课程加入到缓存
+		models.Rdb.HSet(models.Ctx, CoursePrefix+strconv.FormatInt(course.Id, 10), map[string]interface{}{
+			"id":        course.Id,
+			"name":      course.Name,
+			"remain":    course.Remain,
+			"teacherId": strconv.FormatInt(course.TeacherId, 10),
+		})
 	}
 
 }
@@ -70,7 +77,7 @@ func (con CourseController) Get(c *gin.Context) {
 		c.JSON(http.StatusOK, models.GetCourseResponse{
 			Code: models.OK,
 			Data: models.TCourse{
-				CourseID:  c.Query("CourseID"),
+				CourseID:  request.CourseID,
 				Name:      course.Name,
 				TeacherID: strconv.FormatInt(course.TeacherId, 10),
 			},
@@ -99,6 +106,10 @@ func (con CourseController) BindCourse(c *gin.Context) {
 		course.TeacherId = teacherId
 		models.Db.Save(&course)
 		c.JSON(http.StatusOK, models.BindCourseResponse{Code: models.OK})
+		//更改缓存的老师id
+		models.Rdb.HSet(models.Ctx, CoursePrefix+request.CourseID, map[string]interface{}{
+			"teacherId": teacherId,
+		})
 	}
 }
 
@@ -122,10 +133,13 @@ func (con CourseController) UnbindCourse(c *gin.Context) {
 		course.TeacherId = 0
 		models.Db.Save(&course)
 		c.JSON(http.StatusOK, models.UnbindCourseResponse{Code: models.OK})
+		//更改缓存的老师id
+		models.Rdb.HSet(models.Ctx, CoursePrefix+request.CourseID, map[string]interface{}{
+			"teacherId": "0",
+		})
 	}
 }
 
-//TODO 这个返回值有问题吧，返回指针前端啥也看不出啊
 func (con CourseController) GetCourse(c *gin.Context) {
 	var request models.GetTeacherCourseRequest
 	if err := c.BindQuery(&request); err != nil {

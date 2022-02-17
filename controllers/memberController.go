@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"log"
 	"net/http"
 	"strconv"
@@ -103,6 +104,8 @@ func (con MemberController) Create(c *gin.Context) {
 	}
 	res.Code = models.OK
 	res.Data.UserID = strconv.Itoa(int(member.Id))
+	//缓存中置为存在
+	models.Rdb.Set(models.Ctx, StudentPrefix+res.Data.UserID, "1", redis.KeepTTL)
 	c.JSON(http.StatusOK, res)
 }
 
@@ -219,6 +222,8 @@ func (con MemberController) Delete(c *gin.Context) {
 	} else {
 		member.Deleted = 1
 		models.Db.Save(&member)
+		//缓存中置为不存在
+		models.Rdb.Set(models.Ctx, StudentPrefix+request.UserID, "0", redis.KeepTTL)
 		c.JSON(http.StatusOK, models.DeleteMemberResponse{Code: models.OK})
 	}
 }
